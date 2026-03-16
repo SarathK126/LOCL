@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LOCL — Hyperlocal Retail Discovery Platform</title>
+<meta name="description" content="LOCL connects nearby customers with local retail shops through real-time inventory discovery and instant commerce."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --acid:#D4FF00;--bg:#080808;--bg2:#0e0e0e;--bg3:#141414;
+  --surface:#181818;--border:#242424;--text:#f0ede8;--muted:#777;
+  --mono:'Space Mono',monospace;--display:'Syne',sans-serif;--body:'Inter',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;cursor:none}
+body{background:var(--bg);color:var(--text);font-family:var(--body);overflow-x:hidden;line-height:1.6}
+
+/* NOISE */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.45;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-size:180px}
+
+/* CURSOR */
+#cursor{position:fixed;width:10px;height:10px;background:var(--acid);border-radius:50%;pointer-events:none;z-index:10001;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:transform .08s}
+#cursor-ring{position:fixed;width:34px;height:34px;border:1.5px solid var(--acid);border-radius:50%;pointer-events:none;z-index:10000;transform:translate(-50%,-50%);opacity:.55;transition:all .16s cubic-bezier(.25,.46,.45,.94)}
+.hovering #cursor-ring{width:54px;height:54px;opacity:.9}
+
+/* REVEAL */
+.reveal,.reveal-l,.reveal-r{transition:opacity .75s cubic-bezier(.25,.46,.45,.94),transform .75s cubic-bezier(.25,.46,.45,.94)}
+.reveal{opacity:0;transform:translateY(36px)}
+.reveal-l{opacity:0;transform:translateX(-36px)}
+.reveal-r{opacity:0;transform:translateX(36px)}
+.reveal.on,.reveal-l.on,.reveal-r.on{opacity:1;transform:none}
+
+/* STAGGER helper */ 
+.stagger-1{transition-delay:.1s}.stagger-2{transition-delay:.2s}.stagger-3{transition-delay:.3s}.stagger-4{transition-delay:.4s}.stagger-5{transition-delay:.5s}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;
+  padding:1.1rem 4rem;background:rgba(8,8,8,.88);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+.logo{font-family:var(--display);font-weight:800;font-size:1.45rem;color:var(--acid);letter-spacing:-.02em}
+.logo span{color:var(--text)}
+.nav-links{display:flex;gap:2.2rem;list-style:none}
+.nav-links a{font-family:var(--mono);font-size:.68rem;color:var(--muted);text-decoration:none;
+  letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--acid)}
+.nav-cta{font-family:var(--mono);font-size:.68rem;font-weight:700;background:var(--acid);color:#000;
+  padding:.48rem 1.3rem;border:none;border-radius:3px;letter-spacing:.08em;text-transform:uppercase;
+  cursor:none;transition:transform .2s,box-shadow .2s}
+.nav-cta:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(212,255,0,.35)}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  padding:9rem 4rem 5rem;position:relative;overflow:hidden}
+#hero::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(212,255,0,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(212,255,0,.035) 1px,transparent 1px);
+  background-size:56px 56px}
+.hero-glow{position:absolute;top:-15%;right:-8%;width:720px;height:720px;
+  background:radial-gradient(circle,rgba(212,255,0,.07) 0%,transparent 62%);border-radius:50%;pointer-events:none}
+.hero-tag{font-family:var(--mono);font-size:.68rem;color:var(--acid);letter-spacing:.22em;
+  text-transform:uppercase;margin-bottom:1.4rem;display:flex;align-items:center;gap:.8rem}
+.hero-tag::before{content:'';display:inline-block;width:2rem;height:1px;background:var(--acid)}
+.hero-h1{font-family:var(--display);font-weight:800;font-size:clamp(3.8rem,8.5vw,8.5rem);
+  line-height:.95;letter-spacing:-.04em;max-width:920px;margin-bottom:1.2rem}
+.hero-h1 .ac{color:var(--acid)}
+.hero-h1 .out{-webkit-text-stroke:1.5px var(--text);color:transparent}
+.hero-sub{font-size:1.1rem;color:var(--muted);max-width:540px;margin-bottom:2.8rem;line-height:1.85}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap}
+.btn-p{font-family:var(--mono);font-size:.78rem;font-weight:700;background:var(--acid);color:#000;
+  padding:.85rem 2.1rem;border:none;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;
+  cursor:none;text-decoration:none;display:inline-block;transition:transform .2s,box-shadow .2s}
+.btn-p:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(212,255,0,.42)}
+.btn-s{font-family:var(--mono);font-size:.78rem;color:var(--text);border:1px solid var(--border);
+  padding:.85rem 2.1rem;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;cursor:none;
+  text-decoration:none;display:inline-block;transition:all .2s}
+.btn-s:hover{border-color:var(--acid);color:var(--acid);transform:translateY(-3px)}
+.hero-scroll{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:.5rem;
+  font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:.1em}
+.scroll-line{width:1px;height:56px;background:linear-gradient(var(--acid),transparent);
+  animation:sl 2s ease-in-out infinite}
+@keyframes sl{0%,100%{opacity:.3;transform:scaleY(.75)}50%{opacity:1;transform:scaleY(1)}}
+
+/* STATS STRIP */
+#stats{background:var(--acid);padding:2.4rem 4rem;
+  display:flex;align-items:center;justify-content:space-around;flex-wrap:wrap;gap:1.5rem;
+  position:relative;overflow:hidden}
+#stats::before{content:'LOCL · LOCL · LOCL · LOCL · LOCL · LOCL · LOCL · LOCL ·';
+  position:absolute;top:.25rem;left:0;font-family:var(--mono);font-size:.58rem;
+  color:rgba(0,0,0,.1);letter-spacing:.15em;white-space:nowrap}
+.stat-item{text-align:center}
+.stat-num{font-family:var(--display);font-weight:800;font-size:clamp(2.2rem,4vw,3rem);
+  color:#000;line-height:1;letter-spacing:-.03em}
+.stat-lbl{font-family:var(--mono);font-size:.62rem;color:rgba(0,0,0,.55);
+  letter-spacing:.12em;text-transform:uppercase;margin-top:.25rem}
+.stat-div{width:1px;height:36px;background:rgba(0,0,0,.18)}
+
+/* SECTION BASE */
+section{padding:6rem 4rem}
+.sec-tag{font-family:var(--mono);font-size:.66rem;color:var(--acid);letter-spacing:.2em;
+  text-transform:uppercase;display:flex;align-items:center;gap:.7rem;margin-bottom:.9rem}
+.sec-tag::before{content:'//';opacity:.4}
+.sec-title{font-family:var(--display);font-weight:800;font-size:clamp(2.2rem,4.5vw,3.8rem);
+  letter-spacing:-.035em;line-height:1.02;margin-bottom:1.4rem}
+.sec-title .ac{color:var(--acid)}
+
+/* PROBLEM */
+#problem{background:var(--bg2)}
+.prob-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem;margin-top:3rem}
+.prob-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;
+  transition:border-color .3s,transform .3s,box-shadow .3s;cursor:default}
+.prob-card:hover{border-color:var(--acid);transform:translateY(-6px);box-shadow:0 24px 52px rgba(0,0,0,.5)}
+.prob-icon{font-size:1.9rem;margin-bottom:.9rem}
+.prob-card h3{font-family:var(--display);font-size:1.1rem;font-weight:700;margin-bottom:.55rem}
+.prob-card p{color:var(--muted);font-size:.88rem;line-height:1.72}
+
+/* SOLUTION */
+#solution{background:var(--bg)}
+.sol-wrap{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+.sol-steps{display:flex;flex-direction:column;gap:1.1rem;margin-top:1.8rem}
+.step{display:flex;gap:1rem;align-items:flex-start}
+.step-num{font-family:var(--mono);font-size:.6rem;color:var(--acid);background:rgba(212,255,0,.1);
+  border:1px solid rgba(212,255,0,.25);padding:.28rem .55rem;border-radius:4px;
+  white-space:nowrap;flex-shrink:0;margin-top:.2rem}
+.step strong{font-family:var(--display);font-size:.95rem;display:block;margin-bottom:.15rem}
+.step small{color:var(--muted);font-size:.82rem}
+/* PHONE */
+.phone-wrap{position:relative;display:flex;justify-content:center}
+.phone{width:272px;background:linear-gradient(155deg,#1c1c1c,#0e0e0e);border-radius:38px;
+  padding:11px;border:1px solid #2e2e2e;box-shadow:0 44px 88px rgba(0,0,0,.7),0 0 0 1px #252525;
+  position:relative;z-index:1;animation:pfloat 4.5s ease-in-out infinite}
+@keyframes pfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.phone-notch{width:76px;height:22px;background:#000;border-radius:0 0 14px 14px;margin:0 auto 8px}
+.pscreen{background:#0d0d0d;border-radius:26px;padding:13px;min-height:470px;overflow:hidden}
+.app-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.app-logo{font-family:var(--display);font-weight:800;font-size:.88rem;color:var(--acid)}
+.app-loc{font-family:var(--mono);font-size:.52rem;color:var(--muted)}
+.srch-bar{background:#181818;border:1px solid #282828;border-radius:9px;
+  padding:.55rem .75rem;display:flex;align-items:center;gap:.45rem;margin-bottom:9px}
+.srch-bar span:first-child{font-size:.7rem}
+.srch-txt{font-family:var(--mono);font-size:.62rem;color:var(--text);
+  border-right:2px solid var(--acid);animation:blink .85s step-end infinite}
+@keyframes blink{0%,100%{border-color:var(--acid)}50%{border-color:transparent}}
+.res-lbl{font-family:var(--mono);font-size:.52rem;color:var(--acid);
+  margin-bottom:7px;letter-spacing:.04em}
+.shop-row{background:#181818;border:1px solid #282828;border-radius:9px;
+  padding:.65rem .75rem;display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:7px;transition:border-color .3s}
+.shop-row.top{border-color:var(--acid);background:rgba(212,255,0,.04)}
+.sname{font-family:var(--display);font-size:.7rem;font-weight:700;margin-bottom:1px}
+.sdist{font-family:var(--mono);font-size:.5rem;color:var(--muted)}
+.sprice{font-family:var(--mono);font-size:.72rem;font-weight:700;text-align:right;margin-bottom:2px}
+.badge{font-family:var(--mono);font-size:.46rem;color:var(--acid);background:rgba(212,255,0,.12);
+  padding:2px 5px;border-radius:3px;text-align:center}
+.badge.best{background:rgba(212,255,0,.22)}
+.res-btn-wrap{margin-top:9px}
+.res-btn{width:100%;background:var(--acid);color:#000;font-family:var(--mono);font-size:.58rem;
+  font-weight:700;border:none;border-radius:8px;padding:.65rem;letter-spacing:.05em;cursor:none;
+  animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,255,0,.45)}55%{box-shadow:0 0 0 9px rgba(212,255,0,0)}}
+.pglow{position:absolute;bottom:-50px;left:50%;transform:translateX(-50%);
+  width:220px;height:220px;
+  background:radial-gradient(circle,rgba(212,255,0,.14),transparent 65%);pointer-events:none}
+
+/* FEATURES */
+#features{background:var(--bg2)}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1.4rem;margin-top:3rem}
+.feat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;
+  transition:border-color .3s,transform .3s,box-shadow .3s;position:relative;overflow:hidden;cursor:default}
+.feat-card::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 0% 0%,rgba(212,255,0,.06),transparent 55%);
+  opacity:0;transition:opacity .3s;pointer-events:none}
+.feat-card:hover::before{opacity:1}
+.feat-card:hover{border-color:var(--acid);transform:translateY(-6px);box-shadow:0 22px 52px rgba(0,0,0,.5)}
+.feat-ico{width:46px;height:46px;background:rgba(212,255,0,.1);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:.9rem;font-size:1.3rem}
+.feat-card h3{font-family:var(--display);font-size:1rem;font-weight:700;margin-bottom:.5rem}
+.feat-card p{color:var(--muted);font-size:.86rem;line-height:1.72;margin-bottom:.9rem}
+.feat-tag{font-family:var(--mono);font-size:.58rem;color:var(--acid);background:rgba(212,255,0,.1);
+  border:1px solid rgba(212,255,0,.2);padding:.18rem .55rem;border-radius:20px;display:inline-block;letter-spacing:.05em}
+</style>
+</head>
+<body>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">LOC<span>L</span></div>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#revenue">Revenue</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+  </ul>
+  <button class="nav-cta">Get Early Access</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <p class="hero-tag reveal">Hyperlocal Commerce &middot; India &middot; 2025</p>
+  <h1 class="hero-h1 reveal stagger-1">
+    <span class="ac">Local</span> shops.<br/>
+    <span class="out">Instant</span> discovery.
+  </h1>
+  <p class="hero-sub reveal stagger-2">The hyperlocal marketplace that gives India's 12M+ retail stores a digital storefront — and gives customers real-time stock visibility within 5&nbsp;km.</p>
+  <div class="hero-btns reveal stagger-3">
+    <a href="#solution" class="btn-p">See How It Works</a>
+    <a href="#features" class="btn-s">View Features &rarr;</a>
+  </div>
+  <div class="hero-scroll"><div class="scroll-line"></div>SCROLL</div>
+</section>
+
+<!-- STATS -->
+<div id="stats">
+  <div class="stat-item"><div class="stat-num" data-target="12" data-suffix="M+">0</div><div class="stat-lbl">Retail Shops in India</div></div>
+  <div class="stat-div"></div>
+  <div class="stat-item"><div class="stat-num" data-target="5" data-suffix="km">0</div><div class="stat-lbl">Search Radius</div></div>
+  <div class="stat-div"></div>
+  <div class="stat-item"><div class="stat-num" data-target="30" data-suffix="min">0</div><div class="stat-lbl">Avg. Delivery Time</div></div>
+  <div class="stat-div"></div>
+  <div class="stat-item"><div class="stat-num" data-target="8" data-suffix="%">0</div><div class="stat-lbl">Max Commission</div></div>
+</div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="sec-tag reveal">01 &middot; Problem</div>
+  <h2 class="sec-title reveal stagger-1">The <span class="ac">gap</span> no one<br/>is solving.</h2>
+  <div class="prob-grid">
+    <div class="prob-card reveal stagger-1"><div class="prob-icon">📦</div><h3>No Digital Inventory</h3><p>Local shops have zero online presence for their stock. Customers have no way to check availability before commuting.</p></div>
+    <div class="prob-card reveal stagger-2"><div class="prob-icon">🕐</div><h3>Wasted Trips</h3><p>Customers visit 3–5 stores to find one product that could've been reserved in seconds with the right information.</p></div>
+    <div class="prob-card reveal stagger-3"><div class="prob-icon">📉</div><h3>Losing to E-commerce</h3><p>12M+ local retailers lose billions annually to Amazon &amp; Flipkart — despite having stock, proximity advantage &amp; trust.</p></div>
+    <div class="prob-card reveal stagger-4"><div class="prob-icon">🔌</div><h3>Disconnected Shops</h3><p>Quick-commerce giants (Zepto, Blinkit) use their own warehouses. Local stores remain completely left out.</p></div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div class="sol-wrap">
+    <div class="sol-text">
+      <div class="sec-tag reveal-l">02 &middot; Solution</div>
+      <h2 class="sec-title reveal-l stagger-1">Search local.<br/><span class="ac">Buy instantly.</span></h2>
+      <p class="reveal-l stagger-2" style="color:var(--muted);font-size:1rem;line-height:1.85">LOCL is a hyperlocal product discovery engine. Search any product, instantly see nearby shops with live stock and prices — then reserve or order delivery in one tap.</p>
+      <div class="sol-steps reveal-l stagger-3">
+        <div class="step"><span class="step-num">01</span><div><strong>Search a product</strong><small>Find "USB-C cable", "Paracetamol", "HDMI Switch"</small></div></div>
+        <div class="step"><span class="step-num">02</span><div><strong>See nearby shops</strong><small>Live stock · distance · price comparison within 5 km</small></div></div>
+        <div class="step"><span class="step-num">03</span><div><strong>Reserve or order</strong><small>Pick up in 10 min or get doorstep delivery in 30 min</small></div></div>
+      </div>
+    </div>
+    <div class="phone-wrap reveal-r">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="pscreen">
+          <div class="app-hdr"><div class="app-logo">LOCL</div><div class="app-loc">📍 Koramangala · 5km</div></div>
+          <div class="srch-bar"><span>🔍</span><span class="srch-txt">USB-C Charger 65W</span></div>
+          <div class="res-lbl">4 shops nearby &middot; in stock</div>
+          <div class="shop-row top">
+            <div><div class="sname">TechZone Electronics</div><div class="sdist">0.3 km &middot; Open now</div></div>
+            <div><div class="sprice">₹899</div><div class="badge">In Stock</div></div>
+          </div>
+          <div class="shop-row">
+            <div><div class="sname">Mobile Hub</div><div class="sdist">0.8 km &middot; Open now</div></div>
+            <div><div class="sprice">₹949</div><div class="badge">In Stock</div></div>
+          </div>
+          <div class="shop-row">
+            <div><div class="sname">Digital World</div><div class="sdist">1.2 km &middot; Open now</div></div>
+            <div><div class="sprice">₹879</div><div class="badge best">Best Price</div></div>
+          </div>
+          <div class="res-btn-wrap"><button class="res-btn">⚡ Reserve · ₹899 · Free Pickup</button></div>
+        </div>
+      </div>
+      <div class="pglow"></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="sec-tag reveal">03 &middot; Core Features</div>
+  <h2 class="sec-title reveal stagger-1">Built for <span class="ac">speed</span>.<br/>Designed for scale.</h2>
+  <div class="feat-grid">
+    <div class="feat-card reveal stagger-1"><div class="feat-ico">📍</div><h3>Location Search</h3><p>1–5 km geospatial queries via Google Maps. Only truly nearby, relevant shops appear in results.</p><span class="feat-tag">Maps API</span></div>
+    <div class="feat-card reveal stagger-2"><div class="feat-ico">⚡</div><h3>Real-Time Inventory</h3><p>Stock levels sync instantly. Retailers update via dashboard or direct POS integration. Zero stale data.</p><span class="feat-tag">Live Sync</span></div>
+    <div class="feat-card reveal stagger-3"><div class="feat-ico">🔒</div><h3>Product Reservation</h3><p>Customers reserve with one tap. Stock held 30 min. No upfront payment. Zero friction checkout.</p><span class="feat-tag">30-Min Hold</span></div>
+    <div class="feat-card reveal stagger-1"><div class="feat-ico">🚀</div><h3>Instant Delivery</h3><p>30-minute hyperlocal delivery via partner network. Shops dispatch, we route, customers receive.</p><span class="feat-tag">30-Min SLA</span></div>
+    <div class="feat-card reveal stagger-2"><div class="feat-ico">📊</div><h3>Retailer Dashboard</h3><p>Upload inventory, track orders, view analytics, manage listings — all from a mobile-first interface.</p><span class="feat-tag">Mobile-First</span></div>
+    <div class="feat-card reveal stagger-3"><div class="feat-ico">💰</div><h3>Price Comparison</h3><p>Users compare prices across nearby stores in real time. Fair market competition by value, not algorithm.</p><span class="feat-tag">Transparent</span></div>
+  </div>
+</section>
+
+<!-- REVENUE MODEL -->
+<section id="revenue" style="background:var(--bg2)">
+  <div class="sec-tag reveal">04 � Revenue Model</div>
+  <h2 class="sec-title reveal stagger-1">Four streams.<br/><span class="ac">One platform.</span></h2>
+  <div class="rev-grid reveal stagger-2">
+    <div class="rev-card card">
+      <div class="rev-pct">3�8<span>%</span></div>
+      <div class="rev-name">Order Commission</div>
+      <p>Per-transaction fee on every order fulfilled via LOCL. Scales directly with platform GMV.</p>
+      <div class="rev-bar"><div class="rev-fill" style="width:72%"></div></div>
+    </div>
+    <div class="rev-card card">
+      <div class="rev-pct">?<span>sub</span></div>
+      <div class="rev-name">Retailer Subscription</div>
+      <p>Premium plans for advanced analytics, priority listings, unlimited SKUs, and promotional tools.</p>
+      <div class="rev-bar"><div class="rev-fill" style="width:55%"></div></div>
+    </div>
+    <div class="rev-card card">
+      <div class="rev-pct">?<span>ads</span></div>
+      <div class="rev-name">Sponsored Listings</div>
+      <p>Retailers pay to appear at the top of search results for relevant product queries in their area.</p>
+      <div class="rev-bar"><div class="rev-fill" style="width:40%"></div></div>
+    </div>
+    <div class="rev-card card">
+      <div class="rev-pct">??<span>fee</span></div>
+      <div class="rev-name">Delivery Fees</div>
+      <p>Per-delivery logistics revenue from customers opting for doorstep delivery via our partner network.</p>
+      <div class="rev-bar"><div class="rev-fill" style="width:48%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="tech" style="background:var(--bg)">
+  <div class="sec-tag reveal">05 � Tech Stack</div>
+  <h2 class="sec-title reveal stagger-1">Engineered for<br/><span class="ac">hyperlocal scale.</span></h2>
+  <div class="tech-grid reveal stagger-2">
+    <div class="tech-layer">
+      <div class="tech-layer-label">Frontend</div>
+      <div class="tech-chips">
+        <span class="chip">React</span>
+        <span class="chip">React Native</span>
+        <span class="chip">TypeScript</span>
+      </div>
+    </div>
+    <div class="tech-layer">
+      <div class="tech-layer-label">Backend</div>
+      <div class="tech-chips">
+        <span class="chip">.NET Web API</span>
+        <span class="chip">SignalR</span>
+        <span class="chip">Redis Cache</span>
+      </div>
+    </div>
+    <div class="tech-layer">
+      <div class="tech-layer-label">Database</div>
+      <div class="tech-chips">
+        <span class="chip">PostgreSQL</span>
+        <span class="chip">MongoDB</span>
+        <span class="chip">PostGIS</span>
+      </div>
+    </div>
+    <div class="tech-layer">
+      <div class="tech-layer-label">Maps & Geo</div>
+      <div class="tech-chips">
+        <span class="chip">Google Maps API</span>
+        <span class="chip">Geospatial Queries</span>
+      </div>
+    </div>
+    <div class="tech-layer">
+      <div class="tech-layer-label">Cloud & Infra</div>
+      <div class="tech-chips">
+        <span class="chip">AWS / Azure</span>
+        <span class="chip">Docker</span>
+        <span class="chip">Kubernetes</span>
+      </div>
+    </div>
+    <div class="tech-layer">
+      <div class="tech-layer-label">Auth & Payments</div>
+      <div class="tech-chips">
+        <span class="chip">Firebase Auth</span>
+        <span class="chip">Razorpay</span>
+        <span class="chip">UPI</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" style="background:var(--bg2)">
+  <div class="sec-tag reveal">06 � Roadmap</div>
+  <h2 class="sec-title reveal stagger-1">The path to<br/><span class="ac">market dominance.</span></h2>
+  <div class="timeline reveal stagger-2">
+    <div class="tl-item active">
+      <div class="tl-dot"></div>
+      <div class="tl-content">
+        <div class="tl-phase">Phase 1</div>
+        <div class="tl-title">MVP Build</div>
+        <p>Core product search, inventory listing, basic reservation flow, retailer onboarding dashboard.</p>
+        <div class="tl-tag">Q1 2025</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-content">
+        <div class="tl-phase">Phase 2</div>
+        <div class="tl-title">City Launch</div>
+        <p>Single-city launch (Bengaluru). 500 retailers onboarded. Delivery partner integration. Payment gateway live.</p>
+        <div class="tl-tag">Q2 2025</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-content">
+        <div class="tl-phase">Phase 3</div>
+        <div class="tl-title">User Acquisition</div>
+        <p>Local marketing blitz, referral program, influencer partnerships, retailer incentive campaigns.</p>
+        <div class="tl-tag">Q3�Q4 2025</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-content">
+        <div class="tl-phase">Phase 4</div>
+        <div class="tl-title">Multi-City Expansion</div>
+        <p>Expand to 5+ Tier-1 cities. Premium subscriptions live. Sponsored listings. Series A raise.</p>
+        <div class="tl-tag">2026</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FUTURE VISION -->
+<section id="future" style="background:var(--bg)">
+  <div class="sec-tag reveal">07 � Future Vision</div>
+  <h2 class="sec-title reveal stagger-1">Beyond discovery.<br/><span class="ac">Full commerce OS.</span></h2>
+  <div class="future-grid">
+    <div class="fut-card reveal stagger-1">
+      <div class="fut-num">01</div>
+      <div class="fut-title">AI Recommendations</div>
+      <p>Personalized product discovery based on location history, purchase patterns, and local demand signals.</p>
+    </div>
+    <div class="fut-card reveal stagger-2">
+      <div class="fut-num">02</div>
+      <div class="fut-title">POS Integration</div>
+      <p>Direct sync with Tally, Vyapar, and other retail POS systems. Inventory updates automatically.</p>
+    </div>
+    <div class="fut-card reveal stagger-3">
+      <div class="fut-num">03</div>
+      <div class="fut-title">Delivery Network</div>
+      <p>Proprietary last-mile delivery partner ecosystem. Own logistics layer reducing third-party dependency.</p>
+    </div>
+    <div class="fut-card reveal stagger-4">
+      <div class="fut-num">04</div>
+      <div class="fut-title">B2B Supplier Market</div>
+      <p>Help retailers restock from local wholesalers and distributors via our platform. Two-sided B2B layer.</p>
+    </div>
+    <div class="fut-card reveal stagger-5">
+      <div class="fut-num">05</div>
+      <div class="fut-title">Inventory Automation</div>
+      <p>AI-driven demand forecasting helping retailers auto-reorder before stockouts occur.</p>
+    </div>
+    <div class="fut-card reveal stagger-1">
+      <div class="fut-num">06</div>
+      <div class="fut-title">SEA Expansion</div>
+      <p>Replicate the hyperlocal model in Southeast Asia � Indonesia, Philippines, Vietnam � high retail fragmentation markets.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" style="background:var(--acid);position:relative;overflow:hidden;text-align:center;padding:7rem 4rem">
+  <div class="cta-grid-bg"></div>
+  <div class="sec-tag reveal" style="color:rgba(0,0,0,.5);justify-content:center">// Ready to Join</div>
+  <h2 class="reveal stagger-1" style="font-family:var(--display);font-weight:800;font-size:clamp(2.8rem,6vw,5.5rem);letter-spacing:-.04em;line-height:1;color:#000;margin-bottom:1.2rem">
+    Be the first.<br/>Shape the future.
+  </h2>
+  <p class="reveal stagger-2" style="color:rgba(0,0,0,.6);font-size:1.05rem;max-width:520px;margin:0 auto 2.5rem;line-height:1.8">Join the waitlist as an early retailer or customer and get founder-tier access, zero commission for the first 6 months, and direct input on product features.</p>
+  <div class="cta-btns reveal stagger-3">
+    <a href="mailto:hello@locl.in" class="cta-btn-dark">I'm a Retailer ?</a>
+    <a href="mailto:hello@locl.in" class="cta-btn-outline">I'm a Customer ?</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="background:var(--bg);border-top:1px solid var(--border);padding:2.5rem 4rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+  <div style="font-family:var(--display);font-weight:800;font-size:1.2rem;color:var(--acid)">LOCL<span style="color:var(--muted)"> �</span></div>
+  <div style="font-family:var(--mono);font-size:.62rem;color:var(--muted);letter-spacing:.1em">HYPERLOCAL RETAIL DISCOVERY � INDIA � 2025</div>
+  <div style="font-family:var(--mono);font-size:.62rem;color:var(--muted)">hello@locl.in</div>
+</footer>
+
+<style>
+/* REVENUE */
+.rev-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.4rem;margin-top:3rem}
+.rev-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;
+  transition:border-color .3s,transform .3s,box-shadow .3s;cursor:default}
+.rev-card:hover{border-color:var(--acid);transform:translateY(-6px);box-shadow:0 22px 52px rgba(0,0,0,.5)}
+.rev-pct{font-family:var(--display);font-weight:800;font-size:2.4rem;color:var(--acid);line-height:1;margin-bottom:.3rem}
+.rev-pct span{font-size:1.2rem;opacity:.7}
+.rev-name{font-family:var(--display);font-size:.9rem;font-weight:700;margin-bottom:.6rem}
+.rev-card p{color:var(--muted);font-size:.86rem;line-height:1.7;margin-bottom:1rem}
+.rev-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.rev-fill{height:100%;background:var(--acid);border-radius:2px;transition:width 1.2s ease 0.3s}
+/* TECH */
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.4rem;margin-top:3rem}
+.tech-layer{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.6rem;
+  transition:border-color .3s,transform .2s}
+.tech-layer:hover{border-color:var(--acid);transform:translateY(-4px)}
+.tech-layer-label{font-family:var(--mono);font-size:.65rem;color:var(--acid);letter-spacing:.12em;text-transform:uppercase;margin-bottom:1rem}
+.tech-chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.chip{font-family:var(--mono);font-size:.65rem;color:var(--text);background:#222;
+  border:1px solid var(--border);padding:.3rem .7rem;border-radius:20px;letter-spacing:.04em;
+  transition:background .2s,color .2s,border-color .2s}
+.tech-layer:hover .chip{border-color:rgba(212,255,0,.3)}
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0;margin-top:3rem;position:relative;max-width:700px}
+.timeline::before{content:'';position:absolute;left:11px;top:12px;bottom:12px;
+  width:1px;background:var(--border)}
+.tl-item{display:flex;gap:2rem;position:relative;padding-bottom:2.8rem}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);
+  background:var(--bg);flex-shrink:0;margin-top:.15rem;z-index:1;transition:all .3s}
+.tl-item.active .tl-dot{border-color:var(--acid);background:var(--acid);box-shadow:0 0 0 6px rgba(212,255,0,.15)}
+.tl-item:hover .tl-dot{border-color:var(--acid);background:rgba(212,255,0,.2)}
+.tl-phase{font-family:var(--mono);font-size:.6rem;color:var(--acid);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem}
+.tl-title{font-family:var(--display);font-size:1.2rem;font-weight:700;margin-bottom:.5rem}
+.tl-content p{color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:.7rem}
+.tl-tag{font-family:var(--mono);font-size:.6rem;color:var(--text);background:var(--surface);
+  border:1px solid var(--border);padding:.2rem .6rem;border-radius:3px;display:inline-block}
+/* FUTURE */
+.future-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.4rem;margin-top:3rem}
+.fut-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:2rem;
+  transition:border-color .3s,transform .3s,box-shadow .3s;cursor:default}
+.fut-card:hover{border-color:var(--acid);transform:translateY(-5px);box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.fut-num{font-family:var(--mono);font-size:.65rem;color:var(--acid);margin-bottom:.8rem;letter-spacing:.1em}
+.fut-title{font-family:var(--display);font-size:1.05rem;font-weight:700;margin-bottom:.55rem}
+.fut-card p{color:var(--muted);font-size:.86rem;line-height:1.72}
+/* CTA */
+.cta-grid-bg{position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,0,0,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,0,0,.06) 1px,transparent 1px);
+  background-size:42px 42px}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.cta-btn-dark{font-family:var(--mono);font-size:.78rem;font-weight:700;
+  background:#000;color:var(--acid);padding:.9rem 2.2rem;border-radius:4px;
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:none;
+  transition:transform .2s,box-shadow .2s;cursor:none}
+.cta-btn-dark:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+.cta-btn-outline{font-family:var(--mono);font-size:.78rem;
+  border:2px solid rgba(0,0,0,.3);color:#000;padding:.9rem 2.2rem;border-radius:4px;
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:none;
+  transition:all .2s;cursor:none}
+.cta-btn-outline:hover{background:rgba(0,0,0,.1);transform:translateY(-3px)}
+</style>
+
+<script>
+// -- CURSOR ----------------------------------------------
+const cursor=document.getElementById('cursor');
+const ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;
+  cursor.style.left=mx+'px';cursor.style.top=my+'px'});
+function animRing(){rx+=(mx-rx)*.18;ry+=(my-ry)*.18;
+  ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing)}
+animRing();
+document.querySelectorAll('a,button,.card,.prob-card,.feat-card,.rev-card,.fut-card,.tech-layer').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
+});
+
+// -- SCROLL REVEAL ----------------------------------------
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')})
+},{threshold:.12});
+document.querySelectorAll('.reveal,.reveal-l,.reveal-r').forEach(el=>io.observe(el));
+
+// -- STAT COUNTERS ----------------------------------------
+const statEls=document.querySelectorAll('.stat-num[data-target]');
+const statObserver=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const el=e.target;
+      const target=+el.dataset.target;
+      const suffix=el.dataset.suffix||'';
+      let start=0;const dur=1600;const startTime=performance.now();
+      function tick(now){
+        const p=Math.min((now-startTime)/dur,1);
+        const val=Math.floor(p*target);
+        el.textContent=val+suffix;
+        if(p<1)requestAnimationFrame(tick);
+        else el.textContent=target+suffix;
+      }
+      requestAnimationFrame(tick);
+      statObserver.unobserve(el);
+    }
+  })
+},{threshold:.5});
+statEls.forEach(el=>statObserver.observe(el));
+
+// -- REVENUE BAR ANIMATION --------------------------------
+const barObserver=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.rev-fill').forEach(b=>{
+        const w=b.style.width;b.style.width='0';
+        setTimeout(()=>{b.style.width=w},100);
+      });
+      barObserver.unobserve(e.target);
+    }
+  })
+},{threshold:.3});
+document.querySelectorAll('.rev-grid').forEach(el=>barObserver.observe(el));
+
+// -- TYPING ANIMATION (phone search) ---------------------
+const queries=['USB-C Charger 65W','Paracetamol 500mg','Samsung Galaxy S23','HDMI Switch 4K','Arduino Uno Kit','Castor Oil 200ml'];
+const txtEl=document.querySelector('.srch-txt');
+if(txtEl){
+  let qi=0,ci=0,del=false;
+  function typeLoop(){
+    const q=queries[qi];
+    if(!del){
+      ci++;txtEl.textContent=q.slice(0,ci);
+      if(ci===q.length){del=true;setTimeout(typeLoop,1400);return}
+    } else {
+      ci--;txtEl.textContent=q.slice(0,ci);
+      if(ci===0){del=false;qi=(qi+1)%queries.length;setTimeout(typeLoop,300);return}
+    }
+    setTimeout(typeLoop,del?40:80);
+  }
+  setTimeout(typeLoop,1000);
+}
+
+// -- PARALLAX HERO GLOW -----------------------------------
+const glow=document.querySelector('.hero-glow');
+if(glow){
+  window.addEventListener('mousemove',e=>{
+    const x=(e.clientX/window.innerWidth-.5)*30;
+    const y=(e.clientY/window.innerHeight-.5)*20;
+    glow.style.transform=`translate(${x}px,${y}px)`;
+  });
+}
+
+// -- TIMELINE SCROLL ACTIVATION ---------------------------
+const tlItems=document.querySelectorAll('.tl-item');
+const tlObserver=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('active')})
+},{threshold:.4});
+tlItems.forEach((el,i)=>{if(i>0)tlObserver.observe(el)});
+</script>
+</body>
+</html>

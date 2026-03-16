@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: locl_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: locl_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: ./server
+    container_name: locl_api
+    depends_on:
+      - db
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=locl_db;Username=postgres;Password=1234"
+      ASPNETCORE_ENVIRONMENT: Development
+      Jwt__Secret: "LOCL_SuperSecret_JWT_Key_2025_Replace_In_Production_Min32Chars!!"
+      Jwt__Issuer: "LOCL.API"
+      Jwt__Audience: "LOCL.Client"
+      AllowedOrigins: "http://localhost:5173"
+    ports:
+      - "5157:8080"
+
+  web:
+    build: ./client
+    container_name: locl_web
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres_data:

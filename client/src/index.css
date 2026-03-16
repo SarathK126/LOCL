@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Theme (Default) */
+    --color-acid: 212 255 0;
+    --color-acid-dim: 168 204 0;
+    --color-surface: 243 244 246;
+    --color-card: 255 255 255;
+    --color-border: 229 231 235;
+    --color-muted: 107 114 128;
+    --color-background: 255 255 255;
+    --color-foreground: 17 24 39;
+  }
+
+  .dark {
+    /* Dark Theme */
+    --color-acid: 212 255 0;
+    --color-acid-dim: 168 204 0;
+    --color-surface: 17 17 17;
+    --color-card: 26 26 26;
+    --color-border: 42 42 42;
+    --color-muted: 156 163 175;
+    --color-background: 10 10 10;
+    --color-foreground: 255 255 255;
+  }
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased;
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-foreground));
+    min-height: 100vh;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-surface;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-acid text-black font-semibold px-5 py-2.5 rounded-xl hover:bg-acid-dim active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-card border border-border text-white font-semibold px-5 py-2.5 rounded-xl hover:border-acid/50 active:scale-95 transition-all duration-150 disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply text-muted font-medium px-4 py-2 rounded-lg hover:bg-surface hover:text-white transition-all duration-150;
+  }
+  .input {
+    @apply w-full bg-surface border border-border rounded-xl px-4 py-3 text-white placeholder-muted focus:outline-none focus:border-acid/60 focus:ring-1 focus:ring-acid/20 transition-all duration-150;
+  }
+  .card {
+    @apply bg-card border border-border rounded-2xl p-5 hover:border-acid/30 transition-all duration-200;
+  }
+  .label {
+    @apply text-xs font-mono text-muted uppercase tracking-wider mb-1.5 block;
+  }
+  .page-container {
+    @apply max-w-screen-lg mx-auto px-4 pb-24 pt-20;
+  }
+  .section-title {
+    @apply text-lg font-semibold text-white mb-4;
+  }
+}
